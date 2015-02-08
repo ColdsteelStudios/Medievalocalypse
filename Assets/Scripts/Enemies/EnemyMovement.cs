@@ -17,7 +17,7 @@ public class EnemyMovement : MonoBehaviour
 	
 	void Start()
 	{
-		GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
+        GameObject playerGameObject = GameObject.FindGameObjectWithTag("Player");
 		_player = playerGameObject.transform;
 		
 		_controller = GetComponent < CharacterController>();
@@ -26,7 +26,7 @@ public class EnemyMovement : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		Vector3 direction = _player.position - transform.position;
+        Vector3 direction = _player.position - transform.position;
 		direction.Normalize ();
 		
 		Vector3 velocity = direction * _moveSpeed;

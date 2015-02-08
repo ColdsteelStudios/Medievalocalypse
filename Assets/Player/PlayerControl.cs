@@ -16,8 +16,8 @@ public class PlayerControl : MonoBehaviour
     private Animator anim; //a reference to the animator of the character
 
     //Combat variables
-    private float attackOneLength = 0.77f;
-    private float attackTwoLength = 0.73f;
+    private float attackOneLength = 0.77f / 2.0f;
+    private float attackTwoLength = 0.73f / 2.0f;
     private float currentAttackRemaining = 0.0f;
     private float attackComboOverflow = 0.0f; //If the player attacks soon again after the last attack they perform a combo
     private bool currentlyAttacking = false;
