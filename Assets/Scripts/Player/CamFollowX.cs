@@ -33,6 +33,6 @@ public class CamFollowX : MonoBehaviour
         P.z = PC.transform.position.z - ZDistance;
         P.y = PC.transform.position.y - YDistance;
         //Update pos
-        transform.position = P;
+        transform.position = Vector3.Lerp(transform.position, P, Time.deltaTime);
     }
 }

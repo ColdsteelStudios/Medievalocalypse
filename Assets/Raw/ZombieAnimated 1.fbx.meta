@@ -30,6 +30,7 @@ ModelImporter:
     100048: Character1_Spine2
     100050: pCube1
     100052: //RootNode
+    100054: ZAMBEH_SKIN
     400000: Character1_Head
     400002: Character1_Hips
     400004: Character1_LeftArm
@@ -57,13 +58,16 @@ ModelImporter:
     400048: Character1_Spine2
     400050: pCube1
     400052: //RootNode
+    400054: ZAMBEH_SKIN
     4300000: pCube1
+    4300002: ZAMBEH_SKIN
     7400000: Zombie_Idle1
     7400002: Zombie_Idle2
     7400004: Zombie_Idle3
     9500000: //RootNode
     11100000: //RootNode
     13700000: pCube1
+    13700002: ZAMBEH_SKIN
   materials:
     importMaterials: 1
     materialName: 0
