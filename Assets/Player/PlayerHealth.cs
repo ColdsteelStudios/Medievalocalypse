@@ -18,7 +18,7 @@ public class PlayerHealth : MonoBehaviour
     //We want a small cooldown between when the player can take damage
     private bool canBeHurt = true;
     private float lastTimeHurt;
-    private float hurtCooldown = 0.25f;
+    private float hurtCooldown = 1.0f;
 
     void Start()
     {
@@ -40,14 +40,19 @@ public class PlayerHealth : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (other.transform.tag == "EnemyWeapon")
-            Hurt();
+            Hurt(other);
     }
 
-    private void Hurt()
+    private void Hurt(Collider other)
     {
         //Check if we are blocking
-        if (transform.GetComponent<PlayerControllerNew>().IsBlocking())
-            return; //Break out if we are, instead of taking damage
+        if (transform.GetComponent<PlayerController>().IsBlocking())
+        {
+            //Send a message to the enemy saying we blocked the attack
+            other.transform.root.SendMessage("Blocked");
+            return; //Break out if we blocked, instead of taking damage
+        }
+
         if(canBeHurt)
         {
             //Decrement health amount
@@ -60,9 +65,7 @@ public class PlayerHealth : MonoBehaviour
                 UpdateDisplay();
             else
             //Otherwise display a message letting the player know they are dead
-            {
                 textDisplay.text = "Dead!";
-            }
         }
     }
 

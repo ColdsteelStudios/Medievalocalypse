@@ -24,8 +24,14 @@ public class PlayerSeek : MonoBehaviour
     public float attackRange = 2.0f;//How close we must be to the player before we try to attack
     private bool isAttacking = false;
     private float attackDuration = 1.208f;//Length of our attack animation
+    private float attackCooldown = 0.0f;
     private BoxCollider LeftHandCollider;//Colliders for our hands which detect when we hit the player with an attack
     private BoxCollider RightHandCollider;
+
+    //Stumbling back when player blocks
+    private float stumbleAnimationTime = 0.67f;
+    private float stumbleAnimationRemaining = 0.0f;
+    private bool isStumbling = false;
 
     private GameObject PC; //Reference to player character
     private NavMeshAgent NMA; //Reference to our NavMeshAgent component
@@ -44,6 +50,21 @@ public class PlayerSeek : MonoBehaviour
 
     void Update()
     {
+        //Reduce attack cooldown
+        if (attackCooldown > 0.0f)
+            attackCooldown -= Time.deltaTime;
+
+        //Time the ending of the stumble animation if an attack was blocked by the player
+        if (isStumbling)
+        {
+            stumbleAnimationRemaining -= Time.deltaTime;
+            if(stumbleAnimationRemaining<=0.0f)
+            {
+                isStumbling = false;
+                GetComponent<Animator>().SetBool("Blocked", false);
+            }
+        }
+
         //Zombie spawn underground then crawl out
         //If the crawling out(birthing) animation is not complete
         //then we keep playing that
@@ -116,17 +137,32 @@ public class PlayerSeek : MonoBehaviour
 
     private void TryAttack(float a_fPlayerDistance)
     {
+        //Break out of attack if stumbling back
+        if(isStumbling)
+            return;
+
         //If we arent already attacking and we are in range then we attack
-        if((!isAttacking) && a_fPlayerDistance <= attackRange)
+        if (!isAttacking && 
+            a_fPlayerDistance <= attackRange && 
+            attackCooldown <= 0.0f)
         {
+            attackCooldown = 1.5f;
             isAttacking = true;
             //Start playing the attacking animation
             Anim.SetBool("Attacking", true);
             //Stop moving through the navmesh
-            NMA.Stop();
+            //NMA.Stop();
             //Turn on our hands box colliders
             LeftHandCollider.enabled = true;
             RightHandCollider.enabled = true;
         }
+    }
+
+    //Sent message from the player when they block our attack
+    private void Blocked()
+    {
+        GetComponent<Animator>().SetBool("Blocked", true);
+        isStumbling = true;
+        stumbleAnimationRemaining = stumbleAnimationTime;
     }
 }

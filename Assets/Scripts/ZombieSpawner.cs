@@ -12,6 +12,7 @@ using System.Collections;
 public class ZombieSpawner : MonoBehaviour 
 {
     public GameObject ZombiePrefab;
+    public float spawnCooldown = 3.0f;
     private float nextSpawn = 3.0f;
 
     //Only spawn zombies if the player is in this testing area
@@ -34,7 +35,7 @@ public class ZombieSpawner : MonoBehaviour
             if (nextSpawn <= 0.0f)
             {
                 GameObject.Instantiate(ZombiePrefab, transform.position, Quaternion.identity);
-                nextSpawn = 3.0f;
+                nextSpawn = spawnCooldown;
             }
         }
 	}
