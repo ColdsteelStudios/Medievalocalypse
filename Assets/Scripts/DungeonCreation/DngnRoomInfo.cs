@@ -20,4 +20,5 @@ public class DngnRoomInfo : MonoBehaviour
     }
 
     public RoomType m_roomType = RoomType.Void;
+    public Vector2 m_roomPosition;
 }

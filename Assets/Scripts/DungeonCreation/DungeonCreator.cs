@@ -8,9 +8,11 @@
 
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class DungeonCreator : MonoBehaviour 
 {
+    //Prefabs
     public GameObject m_floorPrefab;
     public GameObject m_startCubePrefab;
     public GameObject m_bossCubePrefab;
@@ -18,18 +20,32 @@ public class DungeonCreator : MonoBehaviour
 
     private float m_floorSize;
 
+    //Amount of rooms in the level
     public int m_gridSize = 5; //Originally we want to create 5x5 grid
+    private int m_gridSizeIter; //Used for accessing grids through array
 
+    //2D array which contains all the rooms
     private GameObject[,] m_levelGrid;
+
+    private GameObject m_startRoomMarker;
+    private GameObject m_startRoom;
+    private GameObject m_endRoomMarker;
+    private GameObject m_endRoom;
+    private GameObject m_closestRoom; //Used for building path from start to end
 
     void Start()
     {
+        m_gridSizeIter = m_gridSize - 1;
         //Get the dimentions of the rooms
-        m_floorSize = m_floorPrefab.GetComponent<MeshFilter>().mesh.bounds.size.x;
+        m_floorSize = m_floorPrefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.x;
         //Generate the base grid
         Generate();
         //Create the starting room
         PlaceStart();
+        //Boss room
+        PlaceBoss();
+        //Make sure end and start arent next to each other
+        SpaceRooms();
     }
 
     private void Generate()
@@ -46,6 +62,8 @@ public class DungeonCreator : MonoBehaviour
                 Vector3 l_roomPos = new Vector3(x * m_floorSize, 0, y * m_floorSize);
                 //Spawn and add it
                 m_levelGrid[x, y] = GameObject.Instantiate(m_floorPrefab, l_roomPos, Quaternion.identity) as GameObject;
+                //Tell it its position in the grid
+                m_levelGrid[x, y].GetComponent<DngnRoomInfo>().m_roomPosition = new Vector2(x, y);
             }
         }
     }
@@ -56,10 +74,390 @@ public class DungeonCreator : MonoBehaviour
         int l_xPos = Random.Range(0, m_gridSize);
         int l_yPos = Random.Range(0, m_gridSize);
         //Get the room we have randomly selected
-        GameObject l_selectedRoom = m_levelGrid[l_xPos, l_yPos];
+        m_startRoom = m_levelGrid[l_xPos, l_yPos];
         //Set its room type
-        l_selectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Start;
+        m_startRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Start;
         //We are going to place a cube on the start room to visually mark where it is
-        GameObject l_startMarker = GameObject.Instantiate(m_startCubePrefab, l_selectedRoom.transform.position, Quaternion.identity) as GameObject;
+        m_startRoomMarker = GameObject.Instantiate(m_startCubePrefab, m_startRoom.transform.position, Quaternion.identity) as GameObject;
+    }
+
+    private void PlaceBoss()
+    {
+        //Select random room
+        int l_xPos = Random.Range(0, m_gridSize);
+        int l_yPos = Random.Range(0, m_gridSize);
+        m_endRoom = m_levelGrid[l_xPos, l_yPos];
+        //Choose a new one if this room is already taken
+        if (m_levelGrid[l_xPos, l_yPos].GetComponent<DngnRoomInfo>().m_roomType != DngnRoomInfo.RoomType.Void)
+            PlaceBoss();
+        //Set its type
+        m_levelGrid[l_xPos, l_yPos].GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Boss;
+        //Place marker
+        m_endRoomMarker = GameObject.Instantiate(m_bossCubePrefab, m_levelGrid[l_xPos, l_yPos].transform.position, Quaternion.identity) as GameObject;
+    }
+
+    private void SpaceRooms()
+    {
+        //If the start and end rooms are too close destroy them and replace them
+        float startEndDistance = Vector3.Distance(m_startRoom.transform.position, m_endRoom.transform.position);
+        if(startEndDistance<= 14.14214f)
+        {
+            Debug.Log("Respacing start and boss rooms");
+            GameObject.Destroy(m_startRoomMarker);
+            GameObject.Destroy(m_endRoomMarker);
+            PlaceStart();
+            PlaceBoss();
+            SpaceRooms();
+        }
+        else
+        {
+            //Create a path from start to end
+            if (StartPath())
+                //If the starting rooms connected to the boss room, then were done
+                return;
+            else
+                //otherwise we continue making the pathway
+                ContinuePath();
+        }
+    }
+
+    //If we happen to connect to the boss room by placing rooms around the start
+    //we return true, otherwise return false
+    private bool StartPath()
+    {
+        //Place 1-4 rooms that branch off from the starting room
+        int rand = Random.Range(1, 4);
+        for (int i = 0; i < rand; i++)
+        {
+            GameObject SelectedRoom = GetRandomAdjacentVoid(m_startRoom);
+            SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
+            GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity);
+            //Check if the new room we placed connected to the boss room
+            if (IsBossAdjacent(SelectedRoom))
+            {
+                Debug.Log("Starting rooms connected to boss room.");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void ContinuePath()
+    {
+        //Place 1-3 random rooms, connected to any normal rooms that already exist
+        int rand = Random.Range(1, 3);
+        for (int i = 0; i < rand; i++ )
+        {
+            //Grab random normal room
+            GameObject SelectedRoom = GetRandomNormalRoom();
+            //Get one of its adjacent void rooms
+            SelectedRoom = GetRandomAdjacentVoid(SelectedRoom);
+            //Turn it into a normal room
+            SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
+            //Place an indicator here
+            GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity);
+            //Check if it connects to the boss room
+            if (IsBossAdjacent(SelectedRoom))
+                return;
+        }
+        //Find the closest room to the boss room and add another that takes it one room closer
+        GameObject ClosestNormal = GetClosestNormalRoom();
+        ClosestNormal = GetClosestAdjacentVoid(ClosestNormal);
+        //Make this into a new room
+        ClosestNormal.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
+        GameObject.Instantiate(m_normalCubePrefab, ClosestNormal.transform.position, Quaternion.identity);
+        //Check if we are adjacent to the boss room
+        if (IsBossAdjacent(ClosestNormal))
+            return;
+        else
+            ContinuePath();
+    }
+
+    //Returns the room to the north of the room passed in
+    //or void if there isnt one
+    private GameObject GetNorth(GameObject target)
+    {
+        if (target == null)
+            return null;
+        //Get args room position
+        Vector2 l_roomPos = target.GetComponent<DngnRoomInfo>().m_roomPosition;
+        //If there is a room to the north return that
+        if (l_roomPos.y + 1 <= m_gridSizeIter)
+            return m_levelGrid[(int)l_roomPos.x, (int)l_roomPos.y + 1];
+        //Otherwise just return null
+        return null;
+    }
+
+    private GameObject GetEast(GameObject target)
+    {
+        if (target == null)
+            return null;
+        //Get args room position
+        Vector2 l_roomPos = target.GetComponent<DngnRoomInfo>().m_roomPosition;
+        //If there is a room to the north return that
+        if (l_roomPos.x + 1 <= m_gridSizeIter)
+            return m_levelGrid[(int)l_roomPos.x + 1, (int)l_roomPos.y];
+        //Otherwise just return null
+        return null;
+    }
+
+    private GameObject GetSouth(GameObject target)
+    {
+        if (target == null)
+            return null;
+        //Get args room position
+        Vector2 l_roomPos = target.GetComponent<DngnRoomInfo>().m_roomPosition;
+        //If there is a room to the north return that
+        if ((l_roomPos.y - 1 <= m_gridSizeIter) && (l_roomPos.y - 1 >= 0))
+            return m_levelGrid[(int)l_roomPos.x, (int)l_roomPos.y - 1];
+        //Otherwise just return null
+        return null;
+    }
+
+    private GameObject GetWest(GameObject target)
+    {
+        if (target == null)
+            return null;
+        //Get args room position
+        Vector2 l_roomPos = target.GetComponent<DngnRoomInfo>().m_roomPosition;
+        //If there is a room to the north return that
+        if ((l_roomPos.x - 1 <= m_gridSizeIter) && (l_roomPos.x - 1 >= 0))
+            return m_levelGrid[(int)l_roomPos.x - 1, (int)l_roomPos.y];
+        //Otherwise just return null
+        return null;
+    }
+
+    //Returns closest active room adjacent to the passed in room
+    private GameObject GetClosestAdjacent(GameObject adjacentTarget)
+    {
+        GameObject l_closestRoom = adjacentTarget;
+        float l_closestRoomDistance = Vector3.Distance(l_closestRoom.transform.position, m_endRoom.transform.position);
+
+        GameObject northAdjacent = GetNorth(adjacentTarget);
+        if(northAdjacent!=null)
+        {
+            float northDistance = Vector3.Distance(northAdjacent.transform.position, m_endRoom.transform.position);
+            if(northDistance < l_closestRoomDistance)
+            {
+                l_closestRoomDistance = northDistance;
+                l_closestRoom = northAdjacent;
+            }
+        }
+        GameObject eastAdjacent = GetEast(adjacentTarget);
+        if(eastAdjacent!=null)
+        {
+            float eastDistance = Vector3.Distance(eastAdjacent.transform.position, m_endRoom.transform.position);
+            if(eastDistance < l_closestRoomDistance)
+            {
+                l_closestRoomDistance = eastDistance;
+                l_closestRoom = eastAdjacent;
+            }
+        }
+        GameObject southAdjacent = GetSouth(adjacentTarget);
+        if (southAdjacent != null)
+        {
+            float southDistance = Vector3.Distance(southAdjacent.transform.position, m_endRoom.transform.position);
+            if (southDistance < l_closestRoomDistance)
+            {
+                l_closestRoomDistance = southDistance;
+                l_closestRoom = southAdjacent;
+            }
+        }
+        GameObject westAdjacent = GetWest(adjacentTarget);
+        if (westAdjacent != null)
+        {
+            float westDistance = Vector3.Distance(westAdjacent.transform.position, m_endRoom.transform.position);
+            if (westDistance < l_closestRoomDistance)
+            {
+                l_closestRoomDistance = westDistance;
+                l_closestRoom = westAdjacent;
+            }
+        }
+
+        return l_closestRoom;
+    }
+
+    //Returns the adjacent void room which is closest to the boss room
+    private GameObject GetClosestAdjacentVoid(GameObject target)
+    {
+        GameObject ClosestRoom = target;
+        float ClosestRoomDistance = Vector3.Distance(ClosestRoom.transform.position, m_endRoom.transform.position);
+        //Check each adjacent room and figure out which one is the closest
+        GameObject North = GetNorth(target);
+        //Make sure there is a room here, and its void
+        if(North!=null && North.GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+        {
+            //Check how far away it is
+            float D = Vector3.Distance(North.transform.position, m_endRoom.transform.position);
+            //See if its the closest
+            if(D<ClosestRoomDistance)
+            {
+                ClosestRoom = North;
+                ClosestRoomDistance = D;
+            }
+        }
+        GameObject East = GetEast(target);
+        if (East != null && East.GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+        {
+            float D = Vector3.Distance(East.transform.position, m_endRoom.transform.position);
+            if (D < ClosestRoomDistance)
+            {
+                ClosestRoom = East;
+                ClosestRoomDistance = D;
+            }
+        }
+        GameObject South = GetSouth(target);
+        if (South != null && South.GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+        {
+            float D = Vector3.Distance(South.transform.position, m_endRoom.transform.position);
+            if (D < ClosestRoomDistance)
+            {
+                ClosestRoom = South;
+                ClosestRoomDistance = D;
+            }
+        }
+        GameObject West = GetWest(target);
+        if (West != null && West.GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+        {
+            float D = Vector3.Distance(West.transform.position, m_endRoom.transform.position);
+            if (D < ClosestRoomDistance)
+            {
+                ClosestRoom = West;
+                ClosestRoomDistance = D;
+            }
+        }
+
+        return ClosestRoom;
+    }
+
+    //Returns a random adjacent, void room
+    private GameObject GetRandomAdjacentVoid(GameObject original)
+    {
+        int random = Random.Range(1, 4);
+        GameObject rndAdj = null;
+
+        switch(random)
+        {
+            case (1):
+                {
+                    rndAdj = GetNorth(original);
+                    break;
+                }
+            case (2):
+                {
+                    rndAdj = GetEast(original);
+                    break;
+                }
+            case (3):
+                {
+                    rndAdj = GetSouth(original);
+                    break;
+                }
+            case (4):
+                {
+                    rndAdj = GetWest(original);
+                    break;
+                }
+            default:
+                break;
+        }
+
+        //Call function again if we got a room that is invalid or not void
+        if (rndAdj == null || (rndAdj.GetComponent<DngnRoomInfo>().m_roomType != DngnRoomInfo.RoomType.Void))
+            return GetRandomAdjacentVoid(original);
+        //otherwise we found what we were looking for, return that
+        return rndAdj;
+    }
+
+    //Returns a random normal room on the map
+    private GameObject GetRandomNormalRoom()
+    {
+        //Find all the normal rooms and put them into a list
+        List<GameObject> NormalRooms = new List<GameObject>();
+
+        for ( int x = 0; x < m_gridSize; x++ )
+        {
+            for ( int y = 0; y < m_gridSize; y++ )
+            {
+                if (m_levelGrid[x, y].GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Normal)
+                    NormalRooms.Add(m_levelGrid[x, y]);
+            }
+        }
+
+        //Grab a random room from the list of normals and return that
+        int randIter = Random.Range(0, NormalRooms.Count);
+        return NormalRooms[randIter];
+    }
+
+    //Checks if the passed room has any adjacent void rooms
+    private bool HasAdjacentVoid(GameObject target)
+    {
+        if (GetNorth(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+            return true;
+        if (GetEast(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+            return true;
+        if (GetSouth(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+            return true;
+        if (GetWest(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+            return true;
+        return false;
+    }
+
+    //Checks if the boss room is adjacent to the room that was passed in
+    private bool IsBossAdjacent(GameObject target)
+    {
+        if(GetNorth(target)!=null)
+        {
+            if (GetNorth(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Boss)
+                return true;
+        }
+        if(GetEast(target)!=null)
+        {
+            if (GetEast(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Boss)
+                return true;
+        }
+        if(GetSouth(target)!=null)
+        {
+            if (GetSouth(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Boss)
+                return true;
+        }
+        if(GetWest(target)!=null)
+        {
+            if (GetWest(target).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Boss)
+                return true;
+        }
+        return false;
+    }
+
+    //Returns to closest Normal room to the boss room
+    private GameObject GetClosestNormalRoom()
+    {
+        GameObject ClosestRoom = m_startRoom;
+        float ClosestRoomDistance = Vector3.Distance(m_startRoom.transform.position, m_endRoom.transform.position);
+
+        //Find all the normal rooms and put them into a list
+        List<GameObject> NormalRooms = new List<GameObject>();
+
+        for (int x = 0; x < m_gridSize; x++)
+        {
+            for (int y = 0; y < m_gridSize; y++)
+            {
+                if (m_levelGrid[x, y].GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Normal)
+                    NormalRooms.Add(m_levelGrid[x, y]);
+            }
+        }
+
+        //Figure out which one is closest to the boss room
+        foreach (GameObject NormalRoom in NormalRooms)
+        {
+            float D = Vector3.Distance(NormalRoom.transform.position, m_endRoom.transform.position);
+            if(D<ClosestRoomDistance)
+            {
+                ClosestRoom = NormalRoom;
+                ClosestRoomDistance = D;
+            }
+        }
+
+        return ClosestRoom;
     }
 }
