@@ -18,7 +18,7 @@ public class PlayerSeek : MonoBehaviour
     private float UpdateDestination; //When following, we want to update our destination every 0.25 seconds
 
     private bool BirthingComplete = false;
-    private float BirthingDuration = 5.875f / 3.0f;
+    private float BirthingDuration = 5.875f;
 
     //Combat
     public float attackRange = 2.0f;//How close we must be to the player before we try to attack

@@ -102,7 +102,6 @@ public class DungeonCreator : MonoBehaviour
         float startEndDistance = Vector3.Distance(m_startRoom.transform.position, m_endRoom.transform.position);
         if(startEndDistance<= 14.14214f)
         {
-            Debug.Log("Respacing start and boss rooms");
             GameObject.Destroy(m_startRoomMarker);
             GameObject.Destroy(m_endRoomMarker);
             PlaceStart();
@@ -130,14 +129,14 @@ public class DungeonCreator : MonoBehaviour
         for (int i = 0; i < rand; i++)
         {
             GameObject SelectedRoom = GetRandomAdjacentVoid(m_startRoom);
+            //Selected Room may come back as void if there were none to be found
+            if (SelectedRoom == null)
+                continue;
             SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
             GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity);
             //Check if the new room we placed connected to the boss room
             if (IsBossAdjacent(SelectedRoom))
-            {
-                Debug.Log("Starting rooms connected to boss room.");
                 return true;
-            }
         }
         return false;
     }
@@ -152,6 +151,8 @@ public class DungeonCreator : MonoBehaviour
             GameObject SelectedRoom = GetRandomNormalRoom();
             //Get one of its adjacent void rooms
             SelectedRoom = GetRandomAdjacentVoid(SelectedRoom);
+            if (SelectedRoom == null)
+                continue;
             //Turn it into a normal room
             SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
             //Place an indicator here
@@ -333,40 +334,34 @@ public class DungeonCreator : MonoBehaviour
     //Returns a random adjacent, void room
     private GameObject GetRandomAdjacentVoid(GameObject original)
     {
-        int random = Random.Range(1, 4);
-        GameObject rndAdj = null;
-
-        switch(random)
+        //Get any adjacent void rooms and add them to a list
+        List<GameObject> VoidRooms = new List<GameObject>();
+        if (GetNorth(original) != null)
         {
-            case (1):
-                {
-                    rndAdj = GetNorth(original);
-                    break;
-                }
-            case (2):
-                {
-                    rndAdj = GetEast(original);
-                    break;
-                }
-            case (3):
-                {
-                    rndAdj = GetSouth(original);
-                    break;
-                }
-            case (4):
-                {
-                    rndAdj = GetWest(original);
-                    break;
-                }
-            default:
-                break;
+            if (GetNorth(original).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+                VoidRooms.Add(GetNorth(original));
         }
-
-        //Call function again if we got a room that is invalid or not void
-        if (rndAdj == null || (rndAdj.GetComponent<DngnRoomInfo>().m_roomType != DngnRoomInfo.RoomType.Void))
-            return GetRandomAdjacentVoid(original);
-        //otherwise we found what we were looking for, return that
-        return rndAdj;
+        if (GetEast(original) != null)
+        {
+            if (GetEast(original).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+                VoidRooms.Add(GetEast(original));
+        }
+        if (GetSouth(original) != null)
+        {
+            if (GetSouth(original).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+                VoidRooms.Add(GetSouth(original));
+        }
+        if (GetWest(original) != null)
+        {
+            if (GetWest(original).GetComponent<DngnRoomInfo>().m_roomType == DngnRoomInfo.RoomType.Void)
+                VoidRooms.Add(GetWest(original));
+        }
+        //If there are no items in the list then there are no adjacent rooms
+        if(VoidRooms.Count==0)
+            return null;
+        //Otherwise we select a random room from this list and return that
+        int rand = Random.Range(0, VoidRooms.Count - 1);
+        return VoidRooms[rand];
     }
 
     //Returns a random normal room on the map

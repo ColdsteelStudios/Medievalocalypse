@@ -1,7 +1,7 @@
 // Shader created with Shader Forge Beta 0.27 
 // Shader Forge (c) Joachim Holmer - http://www.acegikmo.com/shaderforge/
 // Note: Manually altering this data may prevent you from opening it in Shader Forge
-/*SF_DATA;ver:0.27;sub:START;pass:START;ps:flbk:,lico:1,lgpr:1,nrmq:0,limd:1,uamb:False,mssp:True,lmpd:False,lprd:False,enco:False,frtr:True,vitr:True,dbil:False,rmgx:True,hqsc:True,hqlp:False,blpr:1,bsrc:3,bdst:7,culm:2,dpts:2,wrdp:True,ufog:False,aust:False,igpj:False,qofs:0,qpre:3,rntp:2,fgom:False,fgoc:False,fgod:False,fgor:False,fgmd:0,fgcr:0.5,fgcg:0.5,fgcb:0.5,fgca:1,fgde:0.01,fgrn:0,fgrf:300,ofsf:0,ofsu:0,f2p0:False;n:type:ShaderForge.SFN_Final,id:0,x:33338,y:32442|diff-224-RGB,transm-223-OUT,alpha-240-A,clip-240-A;n:type:ShaderForge.SFN_TexCoord,id:26,x:34443,y:32505,uv:0;n:type:ShaderForge.SFN_Vector1,id:28,x:34443,y:32662,v1:1;n:type:ShaderForge.SFN_Vector1,id:223,x:33996,y:32590,v1:0;n:type:ShaderForge.SFN_Tex2d,id:224,x:33666,y:32374,ptlb:node_224,ptin:_node_224,ntxv:0,isnm:False;n:type:ShaderForge.SFN_Tex2d,id:240,x:33809,y:32776,ptlb:node_240,ptin:_node_240,ntxv:0,isnm:False;proporder:224-240;pass:END;sub:END;*/
+/*SF_DATA;ver:0.27;sub:START;pass:START;ps:flbk:,lico:1,lgpr:1,nrmq:0,limd:1,uamb:False,mssp:True,lmpd:False,lprd:False,enco:False,frtr:True,vitr:True,dbil:False,rmgx:True,hqsc:True,hqlp:False,blpr:1,bsrc:3,bdst:7,culm:2,dpts:2,wrdp:True,ufog:False,aust:False,igpj:False,qofs:0,qpre:3,rntp:2,fgom:False,fgoc:False,fgod:False,fgor:False,fgmd:0,fgcr:0.5,fgcg:0.5,fgcb:0.5,fgca:1,fgde:0.01,fgrn:0,fgrf:300,ofsf:0,ofsu:0,f2p0:False;n:type:ShaderForge.SFN_Final,id:0,x:33338,y:32442|diff-224-RGB,transm-223-OUT,alpha-240-A,clip-240-A;n:type:ShaderForge.SFN_Vector1,id:223,x:33996,y:32590,v1:0;n:type:ShaderForge.SFN_Tex2d,id:224,x:33666,y:32374,ptlb:node_224,ptin:_node_224,ntxv:0,isnm:False;n:type:ShaderForge.SFN_Tex2d,id:240,x:33809,y:32776,ptlb:node_240,ptin:_node_240,ntxv:0,isnm:False;proporder:224-240;pass:END;sub:END;*/
 
 Shader "Shader Forge/Examples/Refraction" {
     Properties {
@@ -58,8 +58,8 @@ Shader "Shader Forge/Examples/Refraction" {
                 return o;
             }
             fixed4 frag(VertexOutput i) : COLOR {
-                float2 node_269 = i.uv0;
-                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_269.rg, _node_240));
+                float2 node_251 = i.uv0;
+                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_251.rg, _node_240));
                 clip(node_240.a - 0.5);
                 float3 viewDirection = normalize(_WorldSpaceCameraPos.xyz - i.posWorld.xyz);
 /////// Normals:
@@ -81,7 +81,7 @@ Shader "Shader Forge/Examples/Refraction" {
                 float3 diffuse = (forwardLight+backLight) * attenColor;
                 float3 finalColor = 0;
                 float3 diffuseLight = diffuse;
-                finalColor += diffuseLight * tex2D(_node_224,TRANSFORM_TEX(node_269.rg, _node_224)).rgb;
+                finalColor += diffuseLight * tex2D(_node_224,TRANSFORM_TEX(node_251.rg, _node_224)).rgb;
 /// Final Color:
                 return fixed4(finalColor,node_240.a);
             }
@@ -131,8 +131,8 @@ Shader "Shader Forge/Examples/Refraction" {
                 return o;
             }
             fixed4 frag(VertexOutput i) : COLOR {
-                float2 node_270 = i.uv0;
-                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_270.rg, _node_240));
+                float2 node_252 = i.uv0;
+                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_252.rg, _node_240));
                 clip(node_240.a - 0.5);
                 float3 viewDirection = normalize(_WorldSpaceCameraPos.xyz - i.posWorld.xyz);
 /////// Normals:
@@ -154,7 +154,7 @@ Shader "Shader Forge/Examples/Refraction" {
                 float3 diffuse = (forwardLight+backLight) * attenColor;
                 float3 finalColor = 0;
                 float3 diffuseLight = diffuse;
-                finalColor += diffuseLight * tex2D(_node_224,TRANSFORM_TEX(node_270.rg, _node_224)).rgb;
+                finalColor += diffuseLight * tex2D(_node_224,TRANSFORM_TEX(node_252.rg, _node_224)).rgb;
 /// Final Color:
                 return fixed4(finalColor * node_240.a,0);
             }
@@ -196,8 +196,8 @@ Shader "Shader Forge/Examples/Refraction" {
                 return o;
             }
             fixed4 frag(VertexOutput i) : COLOR {
-                float2 node_271 = i.uv0;
-                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_271.rg, _node_240));
+                float2 node_253 = i.uv0;
+                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_253.rg, _node_240));
                 clip(node_240.a - 0.5);
                 SHADOW_COLLECTOR_FRAGMENT(i)
             }
@@ -239,8 +239,8 @@ Shader "Shader Forge/Examples/Refraction" {
                 return o;
             }
             fixed4 frag(VertexOutput i) : COLOR {
-                float2 node_272 = i.uv0;
-                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_272.rg, _node_240));
+                float2 node_254 = i.uv0;
+                float4 node_240 = tex2D(_node_240,TRANSFORM_TEX(node_254.rg, _node_240));
                 clip(node_240.a - 0.5);
                 SHADOW_CASTER_FRAGMENT(i)
             }
