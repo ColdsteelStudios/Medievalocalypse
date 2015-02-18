@@ -26,6 +26,7 @@ public class PlayerController : MonoBehaviour
     private bool m_isAttacking = false;
 
     //Movement
+    private bool m_canMove = true;
     private CharacterController m_controller;
     public float m_walkSpeed = 2.0f;     //Players speed when walking
     public float m_runSpeed = 6.0f;      //Players speed when running
@@ -37,6 +38,9 @@ public class PlayerController : MonoBehaviour
     private float m_verticalVelocity = 0.0f;
     private float m_movementVelocity = 0.0f;
 
+    //Rotation
+    private Quaternion m_previousRotation;
+
     //Collision
     private CollisionFlags m_collisionFlags;
 
@@ -47,6 +51,7 @@ public class PlayerController : MonoBehaviour
         m_controller = GetComponent<CharacterController>();
         m_moveDirection = transform.TransformDirection(Vector3.forward);
         m_weaponCollider = transform.FindChild("Hunter_Animated/Character1_Reference/Character1_Hips/Character1_Spine/Character1_Spine1/Character1_Spine2/Character1_RightShoulder/Character1_RightArm/Character1_RightForeArm/Character1_RightHand/Character1_RightHandMiddle1/sword").GetComponent<BoxCollider>();
+        m_previousRotation = transform.rotation;
     }
 
     void Update()
@@ -86,12 +91,16 @@ public class PlayerController : MonoBehaviour
         //We store speed and direction seperately,
         //so that when the character stands still we still have a valid forward direction
         //m_moveDirection is always normalized, and we only update it if there is user input
+        //Dont allow the player to move when they are turning
         if (l_targetDirection != Vector3.zero)
         {
+            m_canMove = false;
             //Smoothly turn towards our target direction
             m_moveDirection = Vector3.RotateTowards(m_moveDirection, l_targetDirection, m_rotateSpeed * Mathf.Deg2Rad * Time.deltaTime, 1000.0f);
             m_moveDirection = m_moveDirection.normalized;
         }
+        else
+            m_canMove = true;
 
         //Smooth the speed based on the current target direction
         float l_currentSmooth = m_speedSmoothing * Time.deltaTime;
@@ -182,13 +191,18 @@ public class PlayerController : MonoBehaviour
         m_collisionFlags = m_controller.Move(l_movement);
         //Set rotation to the movement direction
         if (IsGrounded())
-            transform.rotation = Quaternion.LookRotation(m_moveDirection);
         {
-            Vector3 l_xzMove = l_movement;
-            l_xzMove.y = 0;
-            if (l_xzMove.sqrMagnitude > 0.001f)
-                transform.rotation = Quaternion.LookRotation(l_xzMove);
+            transform.rotation = Quaternion.LookRotation(m_moveDirection);
+            if(m_canMove)
+            {
+                Vector3 l_xzMove = l_movement;
+                l_xzMove.y = 0;
+                if (l_xzMove.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(l_xzMove);
+            }
         }
+        //Store previous rotation so we can tell if the player is rotating to the left or the right
+        m_previousRotation = transform.rotation;
     }
 
     private void ApplyGravity()
