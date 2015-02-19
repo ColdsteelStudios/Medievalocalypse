@@ -23,7 +23,7 @@ public class PlayerHealth : MonoBehaviour
     void Start()
     {
         //Initialise references and update display message to show current health
-        textDisplay = GameObject.Find("DisplayMessage").GetComponent<Text>();
+        //textDisplay = GameObject.Find("DisplayMessage").GetComponent<Text>();
         UpdateDisplay();
     }
 
@@ -63,15 +63,15 @@ public class PlayerHealth : MonoBehaviour
             if (currentHealth > 0)
                 //If the player is still alive, update the display message to show how much HP is remaining
                 UpdateDisplay();
-            else
+            //else
             //Otherwise display a message letting the player know they are dead
-                textDisplay.text = "Dead!";
+                //textDisplay.text = "Dead!";
         }
     }
 
     private void UpdateDisplay()
     {
         string l_displayMessage = currentHealth + " HP";
-        textDisplay.text = l_displayMessage;
+       // textDisplay.text = l_displayMessage;
     }
 }

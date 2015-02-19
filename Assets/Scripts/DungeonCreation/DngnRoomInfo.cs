@@ -21,4 +21,9 @@ public class DngnRoomInfo : MonoBehaviour
 
     public RoomType m_roomType = RoomType.Void;
     public Vector2 m_roomPosition;
+
+    public bool m_hasNorthWall = false;
+    public bool m_hasSouthWall = false;
+    public bool m_hasEastWall = false;
+    public bool m_hasWestWall = false;
 }

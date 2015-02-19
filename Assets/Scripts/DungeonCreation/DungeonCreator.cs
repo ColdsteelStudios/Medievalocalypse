@@ -13,7 +13,11 @@ using System.Collections.Generic;
 public class DungeonCreator : MonoBehaviour 
 {
     //Prefabs
+    public GameObject m_dungeonRootPrefab;
     public GameObject m_floorPrefab;
+    public GameObject m_doorPrefab;
+    public GameObject m_wallPrefab;
+
     public GameObject m_startCubePrefab;
     public GameObject m_bossCubePrefab;
     public GameObject m_normalCubePrefab;
@@ -27,14 +31,21 @@ public class DungeonCreator : MonoBehaviour
     //2D array which contains all the rooms
     private GameObject[,] m_levelGrid;
 
+    private GameObject m_dungeonRoot;
     private GameObject m_startRoomMarker;
     private GameObject m_startRoom;
     private GameObject m_endRoomMarker;
     private GameObject m_endRoom;
     private GameObject m_closestRoom; //Used for building path from start to end
 
+    //Player stuff
+    public GameObject m_playerPrefab;
+    public GameObject m_cameraPrefab;
+
     void Start()
     {
+        //Create dungeon root
+        m_dungeonRoot = GameObject.Instantiate(m_dungeonRootPrefab, Vector3.zero, Quaternion.identity) as GameObject;
         m_gridSizeIter = m_gridSize - 1;
         //Get the dimentions of the rooms
         m_floorSize = m_floorPrefab.GetComponent<MeshFilter>().sharedMesh.bounds.size.x;
@@ -46,6 +57,170 @@ public class DungeonCreator : MonoBehaviour
         PlaceBoss();
         //Make sure end and start arent next to each other
         SpaceRooms();
+        //Add doors to connect adjacent rooms
+        AddWalls();
+        //Spawn player in the starter room
+        SpawnPlayer();
+    }
+
+    private void SpawnPlayer()
+    {
+        Vector3 SpawnPos = m_startRoomMarker.transform.position;
+        GameObject Player = GameObject.Instantiate(m_playerPrefab, SpawnPos, Quaternion.identity) as GameObject;
+        GameObject Cam = GameObject.Instantiate(m_cameraPrefab, SpawnPos, Quaternion.identity) as GameObject;
+        Cam.GetComponent<HarleyMouseOrbit>().Target = Player.transform.FindChild("CamTarget").transform;
+    }
+
+    private void AddWalls()
+    {
+        for ( int x = 0; x < m_gridSize; x++ )
+        {
+            for ( int y = 0; y < m_gridSize; y++ )
+            {
+                PlaceNorthWall(m_levelGrid[x, y]);
+                PlaceEastWall(m_levelGrid[x, y]);
+                PlaceSouthWall(m_levelGrid[x, y]);
+                PlaceWestWall(m_levelGrid[x, y]);
+            }
+        }
+    }
+
+    private void PlaceNorthWall(GameObject target)
+    {
+        DngnRoomInfo RoomInfo = target.GetComponent<DngnRoomInfo>();
+
+        //Dont bother placing walls around empty rooms
+        if (RoomInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            return;
+
+        if (!RoomInfo.m_hasNorthWall)
+        {
+            //Get the room to the north
+            GameObject NorthRoom = GetNorth(target);
+
+            //If there is void to the north, place a wall
+            if (NorthRoom == null)
+            {
+                //Find the position for it
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += Vector3.forward * (m_floorSize * 0.5f);
+                //Spawn it
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                //Rotate it
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasNorthWall = true;
+                return;
+            }
+
+            //If there is a room to the north, only place a wall if the north room is empty
+            DngnRoomInfo NorthInfo = NorthRoom.GetComponent<DngnRoomInfo>();
+            if (NorthInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            {
+                //Find the position for it
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += Vector3.forward * (m_floorSize * 0.5f);
+                //Spawn it
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                //Rotate it
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasNorthWall = true;
+            }
+        }
+    }
+
+    private void PlaceEastWall(GameObject target)
+    {
+        DngnRoomInfo RoomInfo = target.GetComponent<DngnRoomInfo>();
+        if (RoomInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            return;
+        if (!RoomInfo.m_hasEastWall)
+        {
+            GameObject EastRoom = GetEast(target);
+            if (EastRoom == null)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += Vector3.right * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasEastWall = true;
+                return;
+            }
+            DngnRoomInfo EastInfo = EastRoom.GetComponent<DngnRoomInfo>();
+            if (EastInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += Vector3.right * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasEastWall = true;
+            }
+        }
+    }
+
+    private void PlaceSouthWall(GameObject target)
+    {
+        DngnRoomInfo RoomInfo = target.GetComponent<DngnRoomInfo>();
+        if (RoomInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            return;
+        if(!RoomInfo.m_hasSouthWall)
+        {
+            GameObject SouthRoom = GetSouth(target);
+            if(SouthRoom == null)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += (-Vector3.forward) * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasSouthWall = true;
+                return;
+            }
+            DngnRoomInfo SouthInfo = SouthRoom.GetComponent<DngnRoomInfo>();
+            if (SouthInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += (-Vector3.forward) * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasSouthWall = true;
+            }
+        }
+    }
+
+    private void PlaceWestWall(GameObject target)
+    {
+        DngnRoomInfo RoomInfo = target.GetComponent<DngnRoomInfo>();
+        if (RoomInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            return;
+        if(!RoomInfo.m_hasWestWall)
+        {
+            GameObject WestRoom = GetWest(target);
+            if(WestRoom == null)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += (-Vector3.right) * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasWestWall = true;
+                return;
+            }
+            DngnRoomInfo WestInfo = WestRoom.GetComponent<DngnRoomInfo>();
+            if (WestInfo.m_roomType == DngnRoomInfo.RoomType.Void)
+            {
+                Vector3 RoomPos = target.transform.position;
+                RoomPos += (-Vector3.right) * (m_floorSize * 0.5f);
+                GameObject Wall = GameObject.Instantiate(m_wallPrefab, RoomPos, m_wallPrefab.transform.rotation) as GameObject;
+                Wall.transform.parent = m_dungeonRoot.transform;
+                Wall.transform.LookAt(target.transform.position);
+                RoomInfo.m_hasWestWall = true;
+            }
+        }
     }
 
     private void Generate()
@@ -62,6 +237,7 @@ public class DungeonCreator : MonoBehaviour
                 Vector3 l_roomPos = new Vector3(x * m_floorSize, 0, y * m_floorSize);
                 //Spawn and add it
                 m_levelGrid[x, y] = GameObject.Instantiate(m_floorPrefab, l_roomPos, Quaternion.identity) as GameObject;
+                m_levelGrid[x, y].transform.parent = m_dungeonRoot.transform;
                 //Tell it its position in the grid
                 m_levelGrid[x, y].GetComponent<DngnRoomInfo>().m_roomPosition = new Vector2(x, y);
             }
@@ -79,6 +255,7 @@ public class DungeonCreator : MonoBehaviour
         m_startRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Start;
         //We are going to place a cube on the start room to visually mark where it is
         m_startRoomMarker = GameObject.Instantiate(m_startCubePrefab, m_startRoom.transform.position, Quaternion.identity) as GameObject;
+        m_startRoomMarker.transform.parent = m_dungeonRoot.transform;
     }
 
     private void PlaceBoss()
@@ -94,6 +271,7 @@ public class DungeonCreator : MonoBehaviour
         m_levelGrid[l_xPos, l_yPos].GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Boss;
         //Place marker
         m_endRoomMarker = GameObject.Instantiate(m_bossCubePrefab, m_levelGrid[l_xPos, l_yPos].transform.position, Quaternion.identity) as GameObject;
+        m_endRoomMarker.transform.parent = m_dungeonRoot.transform;
     }
 
     private void SpaceRooms()
@@ -133,7 +311,8 @@ public class DungeonCreator : MonoBehaviour
             if (SelectedRoom == null)
                 continue;
             SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
-            GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity);
+            GameObject l_normalCube = GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity) as GameObject;
+            l_normalCube.transform.parent = m_dungeonRoot.transform;
             //Check if the new room we placed connected to the boss room
             if (IsBossAdjacent(SelectedRoom))
                 return true;
@@ -156,7 +335,8 @@ public class DungeonCreator : MonoBehaviour
             //Turn it into a normal room
             SelectedRoom.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
             //Place an indicator here
-            GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity);
+            GameObject l_normalCubeB = GameObject.Instantiate(m_normalCubePrefab, SelectedRoom.transform.position, Quaternion.identity) as GameObject;
+            l_normalCubeB.transform.parent = m_dungeonRoot.transform;
             //Check if it connects to the boss room
             if (IsBossAdjacent(SelectedRoom))
                 return;
@@ -166,7 +346,8 @@ public class DungeonCreator : MonoBehaviour
         ClosestNormal = GetClosestAdjacentVoid(ClosestNormal);
         //Make this into a new room
         ClosestNormal.GetComponent<DngnRoomInfo>().m_roomType = DngnRoomInfo.RoomType.Normal;
-        GameObject.Instantiate(m_normalCubePrefab, ClosestNormal.transform.position, Quaternion.identity);
+        GameObject l_normalCube = GameObject.Instantiate(m_normalCubePrefab, ClosestNormal.transform.position, Quaternion.identity) as GameObject;
+        l_normalCube.transform.parent = m_dungeonRoot.transform;
         //Check if we are adjacent to the boss room
         if (IsBossAdjacent(ClosestNormal))
             return;
