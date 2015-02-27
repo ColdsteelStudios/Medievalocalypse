@@ -20,6 +20,10 @@ public class PlayerHealth : MonoBehaviour
     private float lastTimeHurt;
     private float hurtCooldown = 1.0f;
 
+    //Sound effects
+    public AudioClip m_hurtSound;//Sound to play when player is hurt
+    public AudioClip m_blockSound;//when player blocks an enemy attack
+
     void Start()
     {
         //Initialise references and update display message to show current health
@@ -48,13 +52,17 @@ public class PlayerHealth : MonoBehaviour
         //Check if we are blocking
         if (transform.GetComponent<PlayerController>().IsBlocking())
         {
+            //Play block sound
+            GetComponent<AudioSource>().PlayOneShot(m_blockSound);
             //Send a message to the enemy saying we blocked the attack
             other.transform.root.SendMessage("Blocked");
             return; //Break out if we blocked, instead of taking damage
         }
 
-        if(canBeHurt)
+        if (canBeHurt)
         {
+            //Play the hurt sound
+            GetComponent<AudioSource>().PlayOneShot(m_hurtSound);
             //Decrement health amount
             currentHealth--;
             //Start taking damage cooldown
@@ -63,15 +71,11 @@ public class PlayerHealth : MonoBehaviour
             if (currentHealth > 0)
                 //If the player is still alive, update the display message to show how much HP is remaining
                 UpdateDisplay();
-            //else
-            //Otherwise display a message letting the player know they are dead
-                //textDisplay.text = "Dead!";
         }
     }
 
     private void UpdateDisplay()
     {
         string l_displayMessage = currentHealth + " HP";
-       // textDisplay.text = l_displayMessage;
     }
 }

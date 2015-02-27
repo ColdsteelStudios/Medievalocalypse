@@ -8,20 +8,25 @@ ModelImporter:
     100004: Dungeon_Wall_Door 1
     100006: Left_Door
     100008: Right_Door
+    100010: Wall1
     400000: Dungeon_Doors
     400002: //RootNode
     400004: Dungeon_Wall_Door 1
     400006: Left_Door
     400008: Right_Door
+    400010: Wall1
     2300000: Dungeon_Wall_Door 1
     2300002: Left_Door
     2300004: Right_Door
+    2300006: Wall1
     3300000: Dungeon_Wall_Door 1
     3300002: Left_Door
     3300004: Right_Door
+    3300006: Wall1
     4300000: Dungeon_Wall_Door
     4300002: Right_Door
     4300004: Left_Door
+    4300006: Wall1
     9500000: //RootNode
   materials:
     importMaterials: 1

@@ -22,6 +22,13 @@ public class EnemyHealth : MonoBehaviour
     private float damageCooldownRemaining = 0.0f;
     private bool canTakeDamage = true;
 
+    //We need to send our parent room a message when we die so it knows when
+    //all the zombies in this room are dead
+    private GameObject m_parentRoom;
+
+    //Sound effect to play when the zombie is hit
+    public AudioClip m_hurtSound;
+
     private bool canDie = false;
 
     void Update()
@@ -61,6 +68,8 @@ public class EnemyHealth : MonoBehaviour
 
     private void TakeDamage()
     {
+        //Play hurt sound
+        GetComponent<AudioSource>().PlayOneShot(m_hurtSound);
         health--;
         SendMessage("Blocked");
         damageCooldownRemaining = damageCooldown;
@@ -71,11 +80,17 @@ public class EnemyHealth : MonoBehaviour
 
     private void Death()
     {
+        m_parentRoom.SendMessage("DecrementSpawnCountRemainder");
         transform.GetComponent<CharacterController>().enabled = false;
         GameObject RD = transform.GetComponent<ReplaceRagdoll>().ReplaceWithRagdoll();
         Vector3 PC = GameObject.FindGameObjectWithTag("Player").transform.position;
         Vector3 D = transform.position - PC;
         RD.transform.FindChild("Character1_Reference").GetComponent<Rigidbody>().AddForce(D * ForceMultiplier);
         GameObject.Destroy(this.gameObject);
+    }
+
+    private void SetParentRoom(GameObject parentRoom)
+    {
+        m_parentRoom = parentRoom;
     }
 }

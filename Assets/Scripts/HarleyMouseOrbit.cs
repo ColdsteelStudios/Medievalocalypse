@@ -35,33 +35,17 @@ public class HarleyMouseOrbit : MonoBehaviour
 
     void LateUpdate()
     {
-        Mouse();
-        Controller();   
+        GetInput();
     }
 
-    private void Mouse()
+    private void GetInput()
     {
         if (Target)
         {
-            x += Input.GetAxis("Mouse X") * xSpeed * 0.02f;
-            y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
-
-            y = ClampAngle(y, yMinLimit, yMaxLimit);
-
-            Quaternion rotation = Quaternion.Euler(y, x, 0);
-            Vector3 position = rotation * new Vector3(0.0f, 0.0f, -Distance) + Target.position;
-
-            transform.rotation = rotation;
-            transform.position = position;
-        }
-    }
-
-    private void Controller()
-    {
-        if (Target)
-        {
-            x += Input.GetAxis("Right Joystick X") * xSpeed * 0.02f;
-            y += Input.GetAxis("Right Joystick Y") * ySpeed * 0.02f;
+            float xInput = Input.GetAxis("Right Joystick X") + Input.GetAxis("Mouse X");
+            float yInput = Input.GetAxis("Right Joystick Y") + Input.GetAxis("Mouse Y");
+            x += xInput * xSpeed * 0.02f;
+            y += yInput * ySpeed * 0.02f;
 
             y = ClampAngle(y, yMinLimit, yMaxLimit);
 

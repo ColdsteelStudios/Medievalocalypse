@@ -20,12 +20,11 @@ public class PlayerController : MonoBehaviour
     private BoxCollider m_weaponCollider;       //Collider that is attatched to the player weapon
     private bool m_isBlocking = false;   //Is the character currently blocking?
     private bool m_isBashing = false;    //Is the character currently shield bashing?
-    private float m_attackGap = 0.7f;
-    private float m_comboEnd = 0.0f;
-    private float m_currentAttackDuration = 0.0f; //Used to activate the collider a short amount of time after the attack has starter
     private bool m_isAttacking = false;
+    private int m_currentAttack = 0;
 
     //Movement
+    private GameObject m_playerCamera = null;
     private bool m_canMove = true;
     private CharacterController m_controller;
     public float m_walkSpeed = 2.0f;     //Players speed when walking
@@ -37,6 +36,17 @@ public class PlayerController : MonoBehaviour
     private Vector3 m_moveDirection = Vector3.zero;
     private float m_verticalVelocity = 0.0f;
     private float m_movementVelocity = 0.0f;
+
+    //Rolling
+    private bool m_isRolling = false;
+    private float m_rollCooldown = 1.167f;
+    private float m_rollCooldownRemainder = 0.0f;
+    //Sprint Delay - sprinting wont start until button has been held down for a short amount of time
+    private float m_sprintDelay = 0.2f;
+    private float m_sprintDelayRemainder;
+    private float m_sprintEndDelay;
+    private bool m_isSprinting = false;
+    private bool m_preSprinting = false;
 
     //Rotation
     private Quaternion m_previousRotation;
@@ -61,6 +71,26 @@ public class PlayerController : MonoBehaviour
         Attack();
         ApplyGravity();
         ApplyMovement();
+        ResetCooldowns();
+    }
+
+    private void SetPlayerCamera(GameObject l_playerCamera)
+    {
+        m_playerCamera = l_playerCamera;
+    }
+
+    private void ResetCooldowns()
+    {
+        //Rolling needs cooldown to prevent attacking and rolling inside a roll
+        if(m_isRolling)
+        {
+            m_rollCooldownRemainder -= Time.deltaTime;
+            if(m_rollCooldownRemainder <= 0.0f)
+            {
+                m_isRolling = false;
+                m_animator.SetBool("Rolling", false);
+            }
+        }
     }
 
     private void PlayerMovement()
@@ -70,7 +100,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         //Movement is relative to camera position
-        Transform l_cameraTransform = Camera.main.transform;
+        Transform l_cameraTransform = m_playerCamera.transform;
 
         //Get forward vector which is relative to the camera along the x-z plane
         Vector3 l_forward = l_cameraTransform.TransformDirection(Vector3.forward);
@@ -82,21 +112,31 @@ public class PlayerController : MonoBehaviour
         Vector3 l_right = new Vector3(l_forward.z, 0, -l_forward.x);
 
         //Get wasd / left thumbstick input
-        float l_v = Input.GetAxisRaw("Vertical");
-        float l_h = Input.GetAxisRaw("Horizontal");
+        float xInput = Input.GetAxis("GamePad Move X");
+        if (Input.GetKey(KeyCode.D))
+            xInput = 1.0f;
+        if (Input.GetKey(KeyCode.A))
+            xInput = -1.0f;
 
-        //Target direction relative to the camera
-        Vector3 l_targetDirection = l_h * l_right + l_v * l_forward;
+        float yInput = Input.GetAxis("GamePad Move Y");
+        if (Input.GetKey(KeyCode.W))
+            yInput = 1.0f;
+        if (Input.GetKey(KeyCode.S))
+            yInput = -1.0f;
+        Vector3 l_movementVector = new Vector3(xInput, 0.0f, yInput);
+
+        l_movementVector = m_playerCamera.transform.TransformDirection(l_movementVector);
+        l_movementVector.y = 0.0f;
 
         //We store speed and direction seperately,
         //so that when the character stands still we still have a valid forward direction
         //m_moveDirection is always normalized, and we only update it if there is user input
         //Dont allow the player to move when they are turning
-        if (l_targetDirection != Vector3.zero)
+        if (l_movementVector != Vector3.zero)
         {
             m_canMove = false;
             //Smoothly turn towards our target direction
-            m_moveDirection = Vector3.RotateTowards(m_moveDirection, l_targetDirection, m_rotateSpeed * Mathf.Deg2Rad * Time.deltaTime, 1000.0f);
+            m_moveDirection = Vector3.RotateTowards(m_moveDirection, l_movementVector, m_rotateSpeed * Mathf.Deg2Rad * Time.deltaTime, 100.0f);
             m_moveDirection = m_moveDirection.normalized;
         }
         else
@@ -107,13 +147,48 @@ public class PlayerController : MonoBehaviour
 
         //Choose target speed
         //* We want to support analog input but make sure you cant walk faster diagonally than just forward or sideways
-        float l_targetSpeed = Mathf.Min(l_targetDirection.magnitude, 1.0f);
+        float l_targetSpeed = Mathf.Min(l_movementVector.magnitude, 1.0f);
 
         //Modify the speed based on the player holding the sprint button
-        if (Input.GetKey(KeyCode.LeftShift) || Input.GetButton("Fire4"))
-            l_targetSpeed *= m_runSpeed;
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetButton("Roll Sprint"))
+        {
+            if(!m_preSprinting)
+            {
+                m_preSprinting = true;
+                m_sprintDelayRemainder = m_sprintDelay;
+            }
+            else
+            {
+                m_sprintDelayRemainder -= Time.deltaTime;
+                if(m_sprintDelayRemainder <= 0.0f)
+                {
+                    m_isSprinting = true;
+                    l_targetSpeed *= m_runSpeed;
+                }
+            }
+        }
         else
+        {
+            if(m_isSprinting)
+            {
+                m_preSprinting = false;
+                m_sprintEndDelay = m_sprintDelay;
+                m_isSprinting = false;
+            }
+            m_sprintEndDelay -= Time.deltaTime;
             l_targetSpeed *= m_walkSpeed;
+        }
+
+        //Allow player to roll if they tap roll/sprint button
+        if (Input.GetButtonUp("Roll Sprint") || Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            if (!m_isSprinting && (m_sprintEndDelay <= 0.0f))
+            {
+                m_animator.SetBool("Rolling", true);
+                m_isRolling = true;
+                m_rollCooldownRemainder = m_rollCooldown;
+            }
+        }
 
         m_movementVelocity = Mathf.Lerp(m_movementVelocity, l_targetSpeed, l_currentSmooth);
 
@@ -123,17 +198,15 @@ public class PlayerController : MonoBehaviour
 
     private void BlockAndBash()
     {
+        //Cant block or bash while rolling
+        if (m_isRolling)
+            return;
+
         //Blocking / Shield Bashing
-        if (Input.GetKey(KeyCode.LeftControl) || Input.GetButton("Fire5"))
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetButton("Block"))
         {
             m_isBlocking = true;
             m_animator.SetBool("Blocking", true);
-            //If player is blocking and presses attack, they perform a shield bash
-            if (Input.GetButton("Fire3") || Input.GetMouseButton(0))
-            {
-                m_isBashing = true;
-                m_animator.SetBool("Bashing", true);
-            }
         }
         else
         {
@@ -148,36 +221,52 @@ public class PlayerController : MonoBehaviour
 
     private void Attack()
     {
+        //Cant attack while rolling
+        if (m_isRolling)
+            return;
+
         //Player cant perform normal attacks while blocking or shield bashing
         if (!m_animator.GetCurrentAnimatorStateInfo(2).IsName("Block") &&
             !m_animator.GetCurrentAnimatorStateInfo(2).IsName("ShieldBash"))
         {
-            if (Input.GetButton("Fire3") || Input.GetMouseButton(0))
+            if (Input.GetButton("Light Attack") || Input.GetMouseButton(0))
             {
                 if(!m_isAttacking)
                 {
                     m_isAttacking = true;
-                    m_animator.SetBool("Attacking", true);
-                    m_currentAttackDuration = 0.0f;
-                    m_comboEnd = m_attackGap;
+
+                    //Which attack are we going to perform?
+                    m_currentAttack = Random.Range(1, 3);
+
+                    if (m_currentAttack == 1)
+                    {
+                        m_animator.SetBool("Attacking1", true);
+                        m_weaponCollider.enabled = true;
+                    }
+                    else
+                    {
+                        m_animator.SetBool("Attacking2", true);
+                        m_weaponCollider.enabled = true;
+                    }
                 }
             }
-            else
+            else if (m_isAttacking)
             {
-                if(m_comboEnd <= 0.0f)
+                //Check for end of attack one
+                if(m_currentAttack == 1 &&
+                    (!m_animator.GetCurrentAnimatorStateInfo(1).IsName("Attack1")))
                 {
                     m_isAttacking = false;
-                    m_animator.SetBool("Attacking", false);
                     m_weaponCollider.enabled = false;
+                    m_animator.SetBool("Attacking1", false);
                 }
-            }
-            m_comboEnd -= Time.deltaTime;
-            //Activate the weapon collider once we are far enough into our current attack
-            if(m_isAttacking)
-            {
-                m_currentAttackDuration += Time.deltaTime;
-                if(m_currentAttackDuration > 0.25f)
-                    m_weaponCollider.enabled = true;
+                else if (m_currentAttack == 2 &&
+                    (!m_animator.GetCurrentAnimatorStateInfo(1).IsName("Attack2")))
+                {
+                    m_isAttacking = false;
+                    m_weaponCollider.enabled = false;
+                    m_animator.SetBool("Attacking2", false);
+                }
             }
         }
     }

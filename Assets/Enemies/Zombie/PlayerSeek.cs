@@ -27,6 +27,7 @@ public class PlayerSeek : MonoBehaviour
     private float attackCooldown = 0.0f;
     private BoxCollider LeftHandCollider;//Colliders for our hands which detect when we hit the player with an attack
     private BoxCollider RightHandCollider;
+    public AudioClip attackSound; //Play this sound when performing an attack
 
     //Stumbling back when player blocks
     private float stumbleAnimationTime = 0.67f;
@@ -146,6 +147,7 @@ public class PlayerSeek : MonoBehaviour
             a_fPlayerDistance <= attackRange && 
             attackCooldown <= 0.0f)
         {
+            GetComponent<AudioSource>().PlayOneShot(attackSound);
             attackCooldown = 1.5f;
             isAttacking = true;
             //Start playing the attacking animation
