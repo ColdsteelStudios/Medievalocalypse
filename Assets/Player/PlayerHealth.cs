@@ -24,11 +24,14 @@ public class PlayerHealth : MonoBehaviour
     public AudioClip m_hurtSound;//Sound to play when player is hurt
     public AudioClip m_blockSound;//when player blocks an enemy attack
 
+    //Retry screen, disable this immediatly when game starts, then reactivate
+    //it when the player dies
+    private GameObject m_retryScreen;
+
     void Start()
     {
-        //Initialise references and update display message to show current health
-        //textDisplay = GameObject.Find("DisplayMessage").GetComponent<Text>();
-        UpdateDisplay();
+        m_retryScreen = GameObject.Find("RetryScreen");
+        m_retryScreen.SetActive(false);
     }
 
     void Update()
@@ -49,6 +52,8 @@ public class PlayerHealth : MonoBehaviour
 
     private void Hurt(Collider other)
     {
+        if (currentHealth == 0)
+            return;
         //Check if we are blocking
         if (transform.GetComponent<PlayerController>().IsBlocking())
         {
@@ -68,14 +73,13 @@ public class PlayerHealth : MonoBehaviour
             //Start taking damage cooldown
             canBeHurt = false;
             lastTimeHurt = hurtCooldown;
-            if (currentHealth > 0)
-                //If the player is still alive, update the display message to show how much HP is remaining
-                UpdateDisplay();
+            GameObject.Find("HealthDisplay").SendMessage("SetHealthDisplay", currentHealth);
+            //If health has reached zero activate the retry screen and disable controls
+            if(currentHealth == 0)
+            {
+                m_retryScreen.SetActive(true);
+                transform.SendMessage("DisableControls");
+            }
         }
-    }
-
-    private void UpdateDisplay()
-    {
-        string l_displayMessage = currentHealth + " HP";
     }
 }

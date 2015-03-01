@@ -147,6 +147,7 @@ public class PlayerSeek : MonoBehaviour
             a_fPlayerDistance <= attackRange && 
             attackCooldown <= 0.0f)
         {
+            transform.LookAt(PC.transform);
             GetComponent<AudioSource>().PlayOneShot(attackSound);
             attackCooldown = 1.5f;
             isAttacking = true;

@@ -47,8 +47,6 @@ public class DngnRoomInfo : MonoBehaviour
         m_targetKillCount--;
         if (m_targetKillCount <= 0)
             OpenAllDoors(false);
-        else
-            print("not enough kills");
     }
 
     public void HasDoor(GameObject door, DungeonCreator.WallSide doorSide)
