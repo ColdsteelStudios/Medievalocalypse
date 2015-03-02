@@ -31,9 +31,6 @@ public class DungeonCreator : MonoBehaviour
     public GameObject m_bossCubePrefab;
     public GameObject m_normalCubePrefab;
 
-    //Enemy spawners
-    public GameObject m_zombieSpawner;
-
     private float m_floorSize;
 
     //Amount of rooms in the level

@@ -81,6 +81,9 @@ public class PlayerSeek : MonoBehaviour
         }
         else
         {
+            //Get reference to player if we dont already have one
+            if (PC == null)
+                PC = GameObject.FindGameObjectWithTag("Player");
             //Calculate distance to the PC
             float D = Vector3.Distance(transform.position, PC.transform.position);
 

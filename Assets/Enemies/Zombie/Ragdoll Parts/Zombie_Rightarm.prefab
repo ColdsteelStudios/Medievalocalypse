@@ -1,17 +1,17 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &194962
+--- !u!1 &156894
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 4: {fileID: 494962}
-  - 33: {fileID: 3394962}
-  - 23: {fileID: 2394962}
-  - 65: {fileID: 6594962}
-  - 54: {fileID: 5494962}
+  - 4: {fileID: 456894}
+  - 33: {fileID: 3356894}
+  - 23: {fileID: 2356894}
+  - 54: {fileID: 5456894}
+  - 65: {fileID: 6556894}
   m_Layer: 0
   m_Name: Zombie_Rightarm
   m_TagString: Untagged
@@ -19,24 +19,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &494962
+--- !u!4 &456894
 Transform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194962}
+  m_GameObject: {fileID: 156894}
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 213.075592, y: 22.8948765, z: 42.4155693}
+  m_LocalPosition: {x: -6.21371031, y: 1.59015059, z: -4.78156471}
   m_LocalScale: {x: .999999881, y: .999999881, z: .999999881}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!23 &2394962
+--- !u!23 &2356894
 Renderer:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194962}
+  m_GameObject: {fileID: 156894}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -51,19 +51,19 @@ Renderer:
   m_ScaleInLightmap: 1
   m_SortingLayerID: 0
   m_SortingOrder: 0
---- !u!33 &3394962
+--- !u!33 &3356894
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194962}
+  m_GameObject: {fileID: 156894}
   m_Mesh: {fileID: 4300000, guid: 92355cb7ca2fb9d42a143fd65a145d31, type: 3}
---- !u!54 &5494962
+--- !u!54 &5456894
 Rigidbody:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194962}
+  m_GameObject: {fileID: 156894}
   serializedVersion: 2
   m_Mass: 1
   m_Drag: 0
@@ -73,12 +73,12 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!65 &6594962
+--- !u!65 &6556894
 BoxCollider:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 194962}
+  m_GameObject: {fileID: 156894}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
@@ -94,6 +94,6 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 194962}
+  m_RootGameObject: {fileID: 156894}
   m_IsPrefabParent: 1
   m_IsExploded: 1

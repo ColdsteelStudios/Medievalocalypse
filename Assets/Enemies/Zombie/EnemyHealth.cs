@@ -52,7 +52,10 @@ public class EnemyHealth : MonoBehaviour
     {
         if ((other.transform.tag == "Weapon") && canDie && canTakeDamage)
         {
-            GameObject.Instantiate(m_bloodSplatterPrefab, other.transform.position, Quaternion.identity);
+            if (m_bloodSplatterPrefab == null)
+                Debug.Log(transform.name + " is missing blood splatter prefab.");
+            else
+                GameObject.Instantiate(m_bloodSplatterPrefab, other.transform.position, Quaternion.identity);
             TakeDamage();
         }
     }
@@ -80,7 +83,8 @@ public class EnemyHealth : MonoBehaviour
 
     private void Death()
     {
-        m_parentRoom.SendMessage("DecrementSpawnCountRemainder");
+        if(m_parentRoom != null)
+            m_parentRoom.SendMessage("DecrementSpawnCountRemainder");
         transform.GetComponent<CharacterController>().enabled = false;
         GameObject RD = transform.GetComponent<ReplaceRagdoll>().ReplaceWithRagdoll();
         Vector3 PC = GameObject.FindGameObjectWithTag("Player").transform.position;

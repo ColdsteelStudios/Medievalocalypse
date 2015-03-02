@@ -297,7 +297,7 @@ public class PlayerController : MonoBehaviour
         {
             l_mousePos = hit.point;
             //Elevate the hit point to the same elevation as the player
-            l_mousePos.y = 0.0f;
+            l_mousePos.y = transform.position.y;
             //Face the player towards this point
             transform.LookAt(l_mousePos);
         }

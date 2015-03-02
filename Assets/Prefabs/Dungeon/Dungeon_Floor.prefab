@@ -149,7 +149,7 @@ MonoBehaviour:
   m_hasSouthWall: 0
   m_hasEastWall: 0
   m_hasWestWall: 0
-  m_zombiePrefab: {fileID: 104316, guid: b234125ffb7e3e143a0294ba196a9ad4, type: 2}
+  m_zombiePrefab: {fileID: 134444, guid: cd858912fbbf6594790b987d9ca4d6b7, type: 2}
   m_targetKillCount: 0
   m_roomCompleteAudioClip: {fileID: 8300000, guid: c8d692328999ea24881f9114a8494af8,
     type: 3}
