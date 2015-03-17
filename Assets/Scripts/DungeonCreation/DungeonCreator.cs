@@ -73,7 +73,7 @@ public class DungeonCreator : MonoBehaviour
         //Add doors between connecting rooms
         AddDoors();
         //Remove all the empty rooms that are left over
-        RemoveEmptyRooms();
+        //RemoveEmptyRooms();
         //Add enemy spawners to the normal rooms
         SpawnEnemies();
         //Spawn player in the starter room
